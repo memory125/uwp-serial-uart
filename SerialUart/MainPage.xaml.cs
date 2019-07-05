@@ -273,7 +273,7 @@ namespace SerialSample
         {
             //Task<UInt32> loadAsyncTask;
 
-            uint ReadBufferLength = 1;
+            uint ReadBufferLength = 1024;
 
             // If task cancellation was requested, comply
             cancellationToken.ThrowIfCancellationRequested();
