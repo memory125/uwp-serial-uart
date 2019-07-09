@@ -30,6 +30,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Grid.ColumnSpan="2" x:Name="pageTitle" Text="UART Sample" Style="{StaticResource HeaderTextBlockStyle}" 
@@ -80,5 +81,8 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto" BorderBrush="White"/>
         </StackPanel>
 
+        <StackPanel Grid.Row="5" Grid.Column="1" HorizontalAlignment="Center"  Height="169" Margin="280,0,0,0" VerticalAlignment="Center">
+            <Image x:Name="imagShow"  Height="169"  VerticalAlignment="Center" Width="207"/>
+        </StackPanel>
     </Grid>
 </Page>

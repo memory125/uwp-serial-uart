@@ -10,6 +10,10 @@ using Windows.Storage.Streams;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using Windows.Graphics.Imaging;
+using Windows.UI.Xaml.Media.Imaging;
+using ZXing;
+using ZXing.QrCode;
 
 namespace SerialSample
 {    
@@ -114,6 +118,8 @@ namespace SerialSample
                 // Enable 'WRITE' button to allow sending data
                 sendTextButton.IsEnabled = true;
 
+                GenerateQRCode("Hello World! QR Code!!!!!!!!!!");
+
                 Listen();
             }
             catch (Exception ex)
@@ -137,8 +143,6 @@ namespace SerialSample
             serialPort.StopBits = SerialStopBitCount.One;
             serialPort.DataBits = 8;
             serialPort.Handshake = SerialHandshake.None;
-            //dataWriteObject = new DataWriter(serialPort.OutputStream);
-            //dataReaderObject = new DataReader(serialPort.InputStream);
         }
 
         /// <summary>
@@ -152,9 +156,8 @@ namespace SerialSample
         {
             try
             {                
-                if (serialPort != null)
-                {
-                    //ConfigSerialPort(serialPort);
+                if (serialPort != null)                {
+                    
                     // Create the DataWriter object and attach to OutputStream
                     dataWriteObject = new DataWriter(serialPort.OutputStream);
 
@@ -192,17 +195,23 @@ namespace SerialSample
 
             if (sendText.Text.Length != 0)
             {
-                // Load the text from the sendText input text box to the dataWriter object
-                //sendText.Text += System.Environment.NewLine;
-                byte[] _byteCrlfToAdd = System.Text.Encoding.ASCII.GetBytes(System.Environment.NewLine);  
+                // Load the text from the sendText input text box to the dataWriter object             
+                //string _strToWrite = string.Concat(sendText.Text, System.Environment.NewLine);
+
+                // 1. Write by bytes
+                //byte[] _byteCrlfToAdd = System.Text.Encoding.ASCII.GetBytes(System.Environment.NewLine); 
                 //byte[] _byteCrlf = new byte[] { 13, 10 };
-                byte[] _bytesSentText = System.Text.Encoding.ASCII.GetBytes(sendText.Text);
+                //byte[] _bytesSentText = System.Text.Encoding.ASCII.GetBytes(sendText.Text);
                 //byte[] _bytesToWrite = _bytesSentText.Concat(_byteCrlf).Where(a => (int)a > 0).ToArray();
                 //byte[] _bytesToWrite = _bytesSentText.Concat(_byteCrlf).ToArray();
-                byte[] _bytesToWrite = _bytesSentText.Concat(_byteCrlfToAdd).ToArray();
-                dataWriteObject.WriteBytes(_bytesToWrite);
-                //dataWriteObject.WriteString(sendText.Text);                
+                //byte[] _bytesToWrite = _bytesSentText.Concat(_byteCrlfToAdd).ToArray();
+                //dataWriteObject.WriteBytes(_bytesToWrite);
+                //dataWriteObject.WriteString(sendText.Text);       
 
+                // 2. Write by string
+                var _strToWrite = string.Concat(sendText.Text, Environment.NewLine);
+                dataWriteObject.WriteString(_strToWrite);
+                
                 // Launch an async task to complete the write operation
                 var bytesWritten = await dataWriteObject.StoreAsync();
                 //storeAsyncTask = dataWriteObject.StoreAsync().AsTask();
@@ -273,7 +282,7 @@ namespace SerialSample
         {
             //Task<UInt32> loadAsyncTask;
 
-            uint ReadBufferLength = 1;
+            uint ReadBufferLength = 1024;
 
             // If task cancellation was requested, comply
             cancellationToken.ThrowIfCancellationRequested();
@@ -288,13 +297,16 @@ namespace SerialSample
                 var bytesRead = await dataReaderObject.LoadAsync(ReadBufferLength).AsTask(childCancellationTokenSource.Token);
 
                 // Launch the task and wait
-                //UInt32 bytesRead = await loadAsyncTask;
+                //UInt32 bytesRead = await loadAsyncTask;               
                 if (bytesRead > 0)
                 {
-                    var _byteToRead = new byte[bytesRead];
-                    dataReaderObject.ReadBytes(_byteToRead);
-                    rcvdText.Text = _byteToRead.ToString();
-                    //rcvdText.Text = dataReaderObject.ReadString(bytesRead);
+                    // 1. Read by byte
+                    //var _byteToRead = new byte[bytesRead];
+                    //dataReaderObject.ReadBytes(_byteToRead);
+                    //rcvdText.Text = _byteToRead.ToString();
+
+                    // 2. Read by string                   
+                    rcvdText.Text = dataReaderObject.ReadString(bytesRead);
                     status.Text = "bytes read successfully!";
                 }
             }
@@ -328,18 +340,6 @@ namespace SerialSample
             }
             serialPort = null;
 
-            //if (dataWriteObject != null)
-            //{
-            //    dataWriteObject.DetachStream();
-            //    dataWriteObject = null;
-            //}
-
-            //if (dataReaderObject != null)
-            //{
-            //    dataReaderObject.DetachStream();
-            //    dataReaderObject = null;
-            //}
-
             comPortInput.IsEnabled = true;
             sendTextButton.IsEnabled = false;            
             rcvdText.Text = "";
@@ -367,6 +367,24 @@ namespace SerialSample
             {
                 status.Text = ex.Message;
             }          
-        }        
+        }       
+        
+        private void GenerateQRCode(string _strText)
+        {
+            BarcodeWriter writer = new BarcodeWriter();
+            writer.Format = BarcodeFormat.QR_CODE;
+            QrCodeEncodingOptions options = new QrCodeEncodingOptions()
+            {
+               DisableECI = true,
+               CharacterSet = "UTF-8",  
+               Width = Convert.ToInt32(imagShow.Width),
+               Height = Convert.ToInt32(imagShow.Height),
+               Margin = 1
+            };
+            
+          writer.Options = options;
+          WriteableBitmap map = writer.Write(_strText);
+          imagShow.Source = map;
+        }  
     }
 }
